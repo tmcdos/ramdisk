@@ -31,6 +31,7 @@ I have to admit that I was in a hurry and just needed a working solution - there
 The code is provided "AS IS" in the hope that it will be useful to others. Testing was done only on Win7 x64 - most probably it will not work on XP.
 The code requires Admin privileges and the Arsenal driver - which can be downloaded from its [official repository](https://github.com/ArsenalRecon/Arsenal-Image-Mounter/tree/master/DriverSetup). 
 
+You will need Delphi 7 and TNT-Unicode in order to compile the source code - or you can simply download the binary release. 
 All pull requests are welcome.
 
 # LICENSE
