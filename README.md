@@ -28,8 +28,10 @@ It took me about a week to extract the relevant code from the AIM (Arsenal Image
 After a lot of debugging and trials/errors I succeeded - and successfully replaced ImDisk Toolkit with my tools.
 I have to admit that I was in a hurry and just needed a working solution - there were no attempts to make the code more robust or to implement complex features (like regex support in the list of folders excluded from synchronization at shutdown).
 
-The code is provided "AS IS" in the hope that it will be useful to others. All pull requests are welcome.
+The code is provided "AS IS" in the hope that it will be useful to others. Testing was done only on Win7 x64 - most probably it will not work on XP.
+The code requires Admin privileges and the Arsenal driver - which can be downloaded from its [official repository](https://github.com/ArsenalRecon/Arsenal-Image-Mounter/tree/master/DriverSetup). 
 
+All pull requests are welcome.
 
 # LICENSE
 
