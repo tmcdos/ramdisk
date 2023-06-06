@@ -167,7 +167,7 @@ Type
   PDriveLayoutInformation = ^TDriveLayoutInformation;
 
 const
-  MAX_DOS_NAMES = 20000; // enough room to handle all possible block and serial devices on an average PC, sometimes it might not be enough !!!
+  MAX_DOS_NAMES = 125000; // enough room to handle all possible block and serial devices on an average PC, sometimes it might not be enough !!!
   OBJ_CASE_INSENSITIVE = $00000040;
   FILE_NON_DIRECTORY_FILE = $00000040;
   FILE_SYNCHRONOUS_IO_NONALERT = $00000020;
@@ -381,7 +381,7 @@ Begin
   if len = 0 then
   begin
     tmp:=GetLastError;
-    raise Exception.Create(SysErrorMessage(tmp));
+    raise Exception.Create('ImScsiOpenScsiAdapter:QueryDosDevice = ' + SysErrorMessage(tmp));
   end;
   for i:=1 to len Do
     if dosDevs[i] = #0 then dosDevs[i]:= #13;
@@ -397,7 +397,16 @@ Begin
         portNum:=StrToInt(Copy(devices[i],5,Length(devices[i])-5));
         if portNum < 256 Then
         Begin
-          if QueryDosDevice(PAnsiChar(devices[i]), PAnsiChar(target), Length(target)) = 0 then RaiseLastOSError;
+          if QueryDosDevice(PAnsiChar(devices[i]), PAnsiChar(target), Length(target)) = 0 then
+          try
+            RaiseLastOSError;
+          except
+            on E:Exception do
+            Begin
+              E.Message:= 'ImScsiOpenScsiAdapter:QueryDosDevice[' + IntToStr(i) + '] = ' + E.Message;
+              raise E;
+            end;
+          end;
           if (Pos(scsiport_prefix, target) = 1) Or (Pos(storport_prefix, target) = 1) then
           Begin
             RtlInitUnicodeString(@devName, PWideChar(WideString(target)));
