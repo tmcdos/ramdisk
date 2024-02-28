@@ -30,8 +30,41 @@ I have to admit that I was in a hurry and just needed a working solution - there
 
 The code is provided "AS IS" in the hope that it will be useful to others. Testing was done only on Win7 x64 - most probably it will not work on XP.
 The code requires Admin privileges and the Arsenal driver - which can be downloaded from its [official repository](https://github.com/ArsenalRecon/Arsenal-Image-Mounter/tree/master/DriverSetup). 
+Thanks to user `lazychris2000` here is a short instruction how to install the Arsenal driver:
 
-You will need Delphi 7 and TNT-Unicode in order to compile the source code - or you can simply download the binary release. 
+### Hassle-free (automatic) way
+
+- download [https://github.com/ArsenalRecon/Arsenal-Image-Mounter/raw/master/DriverSetup/DriverSetup.7z](https://github.com/ArsenalRecon/Arsenal-Image-Mounter/raw/master/DriverSetup/DriverSetup.7z)
+- extract the archive into some folder, for example `c:\arsenal`
+- using an elevated Administrator command prompt, run the following commands:
+
+```
+c:
+cd \arsenal\cli\x64\aim_ll.exe --install ..\..
+
+```
+
+- you should get something similar to the following
+
+```
+Detected Windows kernel version 10.0.19045.
+Platform code: 'Win10'. Using port driver storport.sys.
+
+Reading inf file...
+Creating device object...
+Installing driver for device...
+Finished successfully.
+```
+
+### Manual way
+
+- download [https://github.com/ArsenalRecon/Arsenal-Image-Mounter/raw/master/DriverSetup/DriverFiles.zip](https://github.com/ArsenalRecon/Arsenal-Image-Mounter/raw/master/DriverSetup/DriverFiles.zip)
+- extract the archive into some folder, for example `c:\arsenal`
+- using Windows Explorer, open the appropriate subfolder - e.g. `Win8` or `Win8.1` or `Win10` or perhaps `Win7`
+- point your mouse over `phdskmnt.inf` file in the given subfolder and click the **right** mouse button to open the context menu
+- from this context menu, choose the item `Install` and the Arsenal driver will be installed. You should see it in the Device Manager as `Arsenal Image Mounter` under the group `Storage controllers`
+
+You will need Delphi 7 and TNT-Unicode in order to compile the source code of **RamDiskUI** - or you can simply download the binary release. 
 All pull requests are welcome.
 
 # LICENSE
