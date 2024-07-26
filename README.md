@@ -40,7 +40,8 @@ Thanks to user `lazychris2000` here is a short instruction how to install the Ar
 
 ```
 c:
-cd \arsenal\cli\x64\aim_ll.exe --install ..\..
+cd \arsenal\cli\x64
+aim_ll.exe --install ..\..
 
 ```
 
@@ -66,6 +67,59 @@ Finished successfully.
 
 You will need Delphi 7 and TNT-Unicode in order to compile the source code of **RamDiskUI** - or you can simply download the binary release. 
 All pull requests are welcome.
+
+## Explanation of the registry values
+
+The RAM-disk UI (not the Arsenal driver) creates several registry values which are then picked up by the RAM-disk service (not in real-time unfortunately - only on **start** or **restart** of the service).
+They are created under `[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\ArsenalRamDisk]` and are explained below:
+
+- `DiskSize` is the size in bytes
+- `DriveLetter` is obvious
+- `LoadContent` is path to a folder whose contents will be pre-loaded in the RAM-disk at startup
+- `ExcludeFolders` is StringList (lines delimited with CRLF) which specifies which folder names from the RAM-disk won't be saved on shutdown in the folder specified by `LoadContent`. I usually create numeric folders in my RAM-disk for my daily projects - but I don't want them to be persisted on disk because I can pull them with Git every morning.
+- `UseTempFolder` whether to create TEMP folder on RAM-disk and point the OS to this temp folder
+- `SyncContent` whether to save RAM-disk content on shutdown to the folder specified by `LoadContent`
+- `DeleteOld` whether to delete those files and folders from `LoadContent` which are not present on the RAM-disk on shutdown (meaningful only when `SyncContent` is TRUE)
+
+Here is an example from my PC:
+
+```
+Windows Registry Editor Version 5.00
+
+[HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\services\ArsenalRamDisk]
+"DiskSize"="17179869184"
+"DriveLetter"="Z"
+"LoadContent"="D:\\Setup\\RAM_disk"
+"ExcludeFolders"="chrome
+opera
+phpstorm
+stoplight
+_
+0
+1
+2
+3
+4
+5
+6
+7
+8
+9"
+"UseTempFolder"=dword:00000001
+"SyncContent"=dword:00000001
+"DeleteOld"=dword:00000001
+"Type"=dword:00000010
+"Start"=dword:00000002
+"ErrorControl"=dword:00000001
+"ImagePath"=hex(2):44,00,3a,00,5c,00,53,00,4f,00,55,00,52,00,43,00,45,00,5c,00,\
+  44,00,45,00,4c,00,46,00,49,00,5c,00,52,00,41,00,4d,00,64,00,69,00,73,00,6b,\
+  00,5c,00,52,00,61,00,6d,00,53,00,65,00,72,00,76,00,69,00,63,00,65,00,2e,00,\
+  65,00,78,00,65,00,00,00
+"DisplayName"="Arsenal RAM-disk"
+"WOW64"=dword:00000001
+"ObjectName"="LocalSystem"
+"Description"="Arsenal RAM-disk"
+```
 
 # LICENSE
 
