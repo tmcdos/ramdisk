@@ -104,21 +104,21 @@ Var
   dw: DWORD;
 Begin
   Result:=False;
-  OutputDebugString('Trying to query the version of Arsenal driver');
+  DebugLog('Trying to query the version of Arsenal driver');
   ImScsiInitializeSrbIoBlock(check.SrbIoControl, sizeof(check), SMP_IMSCSI_QUERY_VERSION, 0);
   if Not DeviceIoControl(Device, IOCTL_SCSI_MINIPORT, @check, sizeof(check), @check, sizeof(check), dw, NIL) then
   Begin
-    OutputDebugString('Arsenal driver does not support version checking');
+    DebugLog('Arsenal driver does not support version checking',EVENTLOG_ERROR_TYPE);
     Exit;
   end;
   if dw < sizeof(check) then
   Begin
-    OutputDebugString(PAnsiChar(Format('Arsenal driver reports the size of data structure for version check as %u which is less than expected %u',[dw,SizeOf(check)])));
+    DebugLog(Format('Arsenal driver reports the size of data structure for version check as %u which is less than expected %u',[dw,SizeOf(check)]),EVENTLOG_ERROR_TYPE);
     Exit;
   end;
   if check.SrbIoControl.ReturnCode < IMSCSI_DRIVER_VERSION Then
   Begin
-    OutputDebugString(PAnsiChar(Format('Arsenal driver reports version %u which is less than required %u',[check.SrbIoControl.ReturnCode,IMSCSI_DRIVER_VERSION])));
+    DebugLog(Format('Arsenal driver reports version %u which is less than required %u',[check.SrbIoControl.ReturnCode,IMSCSI_DRIVER_VERSION]),EVENTLOG_ERROR_TYPE);
     Exit;
   end;
   Result:=True;
@@ -177,16 +177,16 @@ Var
   mustFormat, formatDone, mount_point_found:Boolean;
 Begin
   Result:=False;
-  OutputDebugString('Trying to create a new RAM-disk');
+  DebugLog('Trying to create a new RAM-disk');
   driver := ImScsiOpenScsiAdapter(portNumber);
   if driver = INVALID_HANDLE_VALUE then
   Begin
-    OutputDebugString('Arsenal driver is not running');
+    DebugLog('Arsenal driver is not running',EVENTLOG_ERROR_TYPE);
     Exit;
   end;
   if not ImScsiCheckDriverVersion(driver) then
   begin
-    OutputDebugString('Arsenal driver version is not suitable');
+    DebugLog('Arsenal driver version is not suitable',EVENTLOG_ERROR_TYPE);
     CloseHandle(driver);
     Raise ERamDiskError.Create(RamDriverVersion);
   end;
@@ -195,7 +195,7 @@ Begin
   if not ImScsiDeviceIoControl(driver, SMP_IMSCSI_CREATE_DEVICE, create_data.SrbIoControl, SizeOf(create_data), 0, dw) then
   begin
     NtClose(driver);
-    OutputDebugString(PAnsiChar(Format('Could not create the RAM-disk, error is "%s"',[SysErrorMessage(GetLastError)])));
+    DebugLog(Format('Could not create the RAM-disk, error is "%s"',[SysErrorMessage(GetLastError)]),EVENTLOG_ERROR_TYPE);
     raise ERamDiskError.Create(RamCantCreate);
   end;
   NtClose(driver);
@@ -207,7 +207,7 @@ Begin
 
   while true do
   begin
-    OutputDebugString('Disk not attached yet, waiting 200 msec');
+    DebugLog('Disk not attached yet, waiting 200 msec');
     disk := ImScsiOpenDiskByDeviceNumber(create_data.Fields.DeviceNumber, portNumber, diskNumber);
     if disk <> INVALID_HANDLE_VALUE then Break;
     //printf("Disk not attached yet, waiting... %c\r", NextWaitChar(&wait_char));
@@ -220,7 +220,7 @@ Begin
     begin
       while WaitForSingleObject(event, 200) = WAIT_TIMEOUT do
       begin
-        OutputDebugString('Rescanning SCSI adapters, disk not attached yet. Waiting 200 msec');
+        DebugLog('Rescanning SCSI adapters, disk not attached yet. Waiting 200 msec');
         // printf("Disk not attached yet, waiting... %c\r", NextWaitChar(&wait_char));
       end;
       CloseHandle(event);
@@ -234,7 +234,7 @@ Begin
   if disk = INVALID_HANDLE_VALUE then
   begin
     dw:=GetLastError;
-    OutputDebugString(PAnsiChar('Error reopening for writing ' + devPath + ': ' + SysErrorMessage(dw)));
+    DebugLog('Error reopening for writing ' + devPath + ': ' + SysErrorMessage(dw),EVENTLOG_ERROR_TYPE);
     raise ERamDiskError.Create(RamNotAccessible);
   end;
 
@@ -243,7 +243,7 @@ Begin
   if not DeviceIoControl(disk, IOCTL_DISK_SET_DISK_ATTRIBUTES, @disk_attributes, sizeof(disk_attributes), NIL, 0, dw, NIL)
     And (GetLastError <> ERROR_INVALID_FUNCTION) then
   begin
-    OutputDebugString('Cannot set disk in writable online mode');
+    DebugLog('Cannot set disk in writable online mode',EVENTLOG_ERROR_TYPE);
   end;
   DeviceIoControl(disk, FSCTL_ALLOW_EXTENDED_DASD_IO, NIL, 0, NIL, 0, dw, NIL);
 
@@ -253,19 +253,19 @@ Begin
   begin
     if disk_size <> config.size then
     begin
-      OutputDebugString(PAnsiChar('Disk ' + devPath + ' has unexpected size: ' + IntToStr(disk_size)));
+      DebugLog('Disk ' + devPath + ' has unexpected size: ' + IntToStr(disk_size),EVENTLOG_ERROR_TYPE);
       mustFormat := False;
     end;
   end
   else if GetLastError <> ERROR_INVALID_FUNCTION then
   begin
     dw:=GetLastError;
-    OutputDebugString(PAnsiChar('Can not query size of disk ' + devPath + ': ' + SysErrorMessage(dw)));
+    DebugLog('Can not query size of disk ' + devPath + ': ' + SysErrorMessage(dw),EVENTLOG_ERROR_TYPE);
     mustFormat := False;
   end;
   if mustFormat then
   begin
-    OutputDebugString('Will now create a partition on the RAM device');
+    DebugLog('Will now create a partition on the RAM device');
     rand_seed := GetTickCount();
     while true do
     begin
@@ -284,7 +284,7 @@ Begin
 
       if DeviceIoControl(disk, IOCTL_DISK_SET_DRIVE_LAYOUT, @drive_layout, sizeof(drive_layout), NIL, 0, dw, NIL) then
       Begin
-        OutputDebugString('Successfully created the partition');
+        DebugLog('Successfully created the partition');
         Break;
       end;
       if GetLastError <> ERROR_WRITE_PROTECT then
@@ -294,7 +294,7 @@ Begin
       end;
 
       //printf("Disk not yet ready, waiting... %c\r", NextWaitChar(&wait_char));
-      OutputDebugString('Disk is not yet ready for partitioning, waiting ...');
+      DebugLog('Disk is not yet ready for partitioning, waiting ...');
 
       ZeroMemory(@disk_attributes, sizeof(disk_attributes));
       disk_attributes.AttributesMask := DISK_ATTRIBUTE_OFFLINE or DISK_ATTRIBUTE_READ_ONLY;
@@ -305,18 +305,18 @@ Begin
   end;
 
   if not DeviceIoControl(disk, IOCTL_DISK_UPDATE_PROPERTIES, NIL, 0, NIL, 0, dw, NIL)
-    And (GetLastError <> ERROR_INVALID_FUNCTION) then OutputDebugString('Error updating disk properties');
+    And (GetLastError <> ERROR_INVALID_FUNCTION) then DebugLog('Error updating disk properties',EVENTLOG_ERROR_TYPE);
   CloseHandle(disk);
   start_time := GetTickCount();
   formatDone := false;
   numVolumes:=0;
   while true do
   begin
-    OutputDebugString('Trying to find the volume (partition) by name');
+    DebugLog('Trying to find the volume (partition) by name');
     volume := FindFirstVolume(volumeName, Length(volumeName));
     if volume = INVALID_HANDLE_VALUE then
     begin
-      OutputDebugString('Error enumerating disk volumes');
+      DebugLog('Error enumerating disk volumes',EVENTLOG_ERROR_TYPE);
       raise ERamDiskError.Create(RamCantEnumDrives);
     End;
 
@@ -325,13 +325,13 @@ Begin
     try
       repeat
         volumeName[48] := #0;
-        OutputDebugString(PAnsiChar(Format('Quering volume %s',[volumeName])));
+        DebugLog(Format('Quering volume %s',[volumeName]));
         volHandle := CreateFile(volumeName, 0, FILE_SHARE_READ or FILE_SHARE_WRITE, NIL, OPEN_EXISTING, 0, 0);
         if volHandle = INVALID_HANDLE_VALUE then Continue;
         if not ImScsiVolumeUsesDisk(volHandle, diskNumber) then
         begin
           CloseHandle(volHandle);
-          OutputDebugString('This volume is not used (created) by Arsenal');
+          DebugLog('This volume is not used (created) by Arsenal');
           continue;
         end;
 
@@ -339,12 +339,12 @@ Begin
         Inc(numVolumes);
 
         volHandle := CreateFile(volumeName, GENERIC_READ or GENERIC_WRITE, FILE_SHARE_READ or FILE_SHARE_WRITE, NIL, OPEN_EXISTING, 0, 0);
-        if volHandle = INVALID_HANDLE_VALUE then OutputDebugString('Error opening volume in read/write mode')
+        if volHandle = INVALID_HANDLE_VALUE then DebugLog('Error opening volume in read/write mode',EVENTLOG_ERROR_TYPE)
         else
         begin
           if Not DeviceIoControl(volHandle, IOCTL_VOLUME_ONLINE, NIL, 0, NIL, 0, dw, NIL) then
           begin
-            OutputDebugString('Error setting volume in online mode');
+            DebugLog('Error setting volume in online mode',EVENTLOG_ERROR_TYPE);
           end;
           CloseHandle(volHandle);
         end;
@@ -358,14 +358,14 @@ Begin
           // we use the undocumented FMIFS.DLL instead of Format.COM or VDS or WMI or ShFormatDrive - it always takes at least 5 seconds
           formatDriveName:=volumeName;
           FormatEx(PWideChar(formatDriveName),FMIFS_HARDDISK,'NTFS','RAMDISK',True,4096,@FormatCallBack);
-          OutputDebugString('Successfully created NTFS filesystem on the RAM-disk');
+          DebugLog('Successfully created NTFS filesystem on the RAM-disk');
           if ShowProgress then HideInfo;
         end;
 
         volumeName[48] := '\';
         if Not GetVolumePathNamesForVolumeName(volumeName, mountName, Length(mountName), dw) then
         begin
-          OutputDebugString(PAnsiChar(Format('Error enumerating mount points for volume %s',[volumeName])));
+          DebugLog(Format('Error enumerating mount points for volume %s',[volumeName]),EVENTLOG_ERROR_TYPE);
           continue;
         end;
 
@@ -375,21 +375,21 @@ Begin
         mountList.Text:=mountName;
         for i:=0 to mountList.Count-1 do
         begin
-          OutputDebugString(PAnsiChar(Format('Now trying to get a drive letter for "%s"',[mountList[i]])));
+          DebugLog(Format('Now trying to get a drive letter for "%s"',[mountList[i]]));
           if mountList[i] = '' then Break;
           if CompareText(mountPoint,mountList[i])<>0 then
           begin
-            OutputDebugString('Removing the old mount point');
+            DebugLog('Removing the old mount point');
             if Not DeleteVolumeMountPoint(PAnsiChar(mountList[i])) then
             begin
               dw:=GetLastError;
-              OutputDebugString(PAnsiChar('Error removing old mount point "'+mountList[i]+'": ' + SysErrorMessage(dw)));
+              DebugLog('Error removing old mount point "'+mountList[i]+'": ' + SysErrorMessage(dw),EVENTLOG_ERROR_TYPE);
             end;
           end
           else
           begin
             mount_point_found := true;
-            OutputDebugString(PAnsiChar(Format('Mounted at %s',[mountPoint])));
+            DebugLog(Format('Mounted at %s',[mountPoint]));
             // ImScsiOemPrintF(stdout, "  Mounted at %1!ws!", mnt);
           end;
         end;
@@ -400,12 +400,12 @@ Begin
             MountPoint[1] := ImDiskFindFreeDriveLetter();
             if MountPoint[1] = #0 then raise ERamDiskError.Create(RamNoFreeLetter)
             Else config.letter:=MountPoint[1];
-            OutputDebugString(PAnsiChar('Will use drive letter ' + MountPoint[1]));
+            DebugLog('Will use drive letter ' + MountPoint[1]);
           end;
           if not SetVolumeMountPoint(PAnsiChar(MountPoint), volumeName) then
           begin
             dw:=GetLastError;
-            OutputDebugString(PAnsiChar('Error setting volume ' + volumeName + ' mount point to ' + MountPoint + ' : ' + SysErrorMessage(dw)));
+            DebugLog('Error setting volume ' + volumeName + ' mount point to ' + MountPoint + ' : ' + SysErrorMessage(dw),EVENTLOG_ERROR_TYPE);
           end
           else Break;
           //MountPoint := '';
@@ -419,12 +419,12 @@ Begin
     if formatDone or (numVolumes > 0) then break;
     if not mustFormat and ((GetTickCount() - start_time) > 3000) then
     begin
-      OutputDebugString('No volumes attached. Disk could be offline or not partitioned.');
+      DebugLog('No volumes attached. Disk could be offline or not partitioned.',EVENTLOG_ERROR_TYPE);
       break;
     end;
 
     //printf("Volume not yet attached, waiting... %c\r", NextWaitChar(&wait_char));
-    OutputDebugString('Volume not yet attached, waiting 200 msec');
+    DebugLog('Volume not yet attached, waiting 200 msec');
     Sleep(200);
   end;
   LoadRamDisk(config);

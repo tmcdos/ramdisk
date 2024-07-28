@@ -37,47 +37,47 @@ var
 Begin
   reg:=TTntRegistry.Create(KEY_READ);
   Try
-    OutputDebugString('Reading settings from registry');
+    DebugLog('Reading settings from registry');
     reg.RootKey:=HKEY_LOCAL_MACHINE;
     if Reg.OpenKey('SYSTEM\CurrentControlSet\Services\ArsenalRamDisk', False) then
     begin
       If Reg.ValueExists('DiskSize') then
       Begin
         config.size:=StrToInt64(reg.ReadString('DiskSize'));
-        OutputDebugString(PAnsiChar(Format('Reading DiskSize = %u',[config.size])));
+        DebugLog(Format('Reading DiskSize = %u',[config.size]));
       end;
       if reg.ValueExists('DriveLetter') Then
       Begin
         config.letter:=Char(reg.ReadString('DriveLetter')[1]);
-        OutputDebugString(PAnsiChar(Format('Reading DriveLetter = %s',[config.letter])));
+        DebugLog(Format('Reading DriveLetter = %s',[config.letter]));
       end;
       if reg.ValueExists('LoadContent') Then
       Begin
         config.persistentFolder:=reg.ReadString('LoadContent');
-        OutputDebugStringW(PWideChar(WideFormat('Reading LoadContent = %s',[config.persistentFolder])));
+        DebugLog(WideFormat('Reading LoadContent = %s',[config.persistentFolder]));
       end;
       if reg.ValueExists('ExcludeFolders') Then
       Begin
         config.excludedList:=reg.ReadString('ExcludeFolders');
-        OutputDebugStringW(PWideChar(WideFormat('Reading ExcludeFolders = %s',[config.excludedList])));
+        DebugLog(WideFormat('Reading ExcludeFolders = %s',[config.excludedList]));
       end;
       if reg.ValueExists('UseTempFolder') Then
       Begin
         config.useTemp:=reg.ReadBool('UseTempFolder');
-        OutputDebugString(PAnsiChar(Format('Reading UseTempFolder = %d',[Ord(config.useTemp)])));
+        DebugLog(Format('Reading UseTempFolder = %d',[Ord(config.useTemp)]));
       end;
       if reg.ValueExists('SyncContent') Then
       Begin
         config.synchronize:=reg.ReadBool('SyncContent');
-        OutputDebugString(PAnsiChar(Format('Reading SyncContent = %d',[Ord(config.synchronize)])));
+        DebugLog(Format('Reading SyncContent = %d',[Ord(config.synchronize)]));
       end;
       if reg.ValueExists('DeleteOld') Then
       Begin
         config.deleteOld:=reg.ReadBool('DeleteOld');
-        OutputDebugString(PAnsiChar(Format('Reading DeleteOld = %d',[Ord(config.deleteOld)])));
+        DebugLog(Format('Reading DeleteOld = %d',[Ord(config.deleteOld)]));
       end;
       Reg.CloseKey;
-      OutputDebugString('All settings from registry were loaded');
+      DebugLog('All settings from registry were loaded');
     end;
   Finally
     reg.Free;
@@ -119,40 +119,34 @@ end;
 
 procedure TArsenalRamDisk.ServiceShutdown(Sender: TService);
 begin
-  OutputDebugString('RamDisk service initiated shutdown');
+  DebugLog('RamDisk service initiated shutdown');
   DetachRamDisk(config);
 end;
 
 procedure TArsenalRamDisk.ServiceStart(Sender: TService; var Started: Boolean);
 begin
-  OutputDebugString('RamDisk service was started');
+  DebugLog('RamDisk service was started');
   LoadSettings;
   if (config.size<>0) then
   try
     if CreateRamDisk(config,False) Then Started:=True;
   except
-    On E:ERamDiskError do decodeException(E.ArsenalCode);
-    On E:Exception do OutputDebugString(PAnsiChar(E.Message));
+    On E:ERamDiskError do DebugLog(decodeException(E.ArsenalCode));
+    On E:Exception do DebugLog(E.Message);
   End;
 end;
 
 procedure TArsenalRamDisk.ServiceStop(Sender: TService; var Stopped: Boolean);
-var
-  msg:string;
 begin
-  OutputDebugString('RamDisk service is being stopped');
+  DebugLog('RamDisk service is being stopped');
   if config.letter <> #0 then
   begin
-    OutputDebugString('Trying to unmount RamDisk');
+    DebugLog('Trying to unmount RamDisk');
     try
       If DetachRamDisk(config) then Stopped:=True;
     except
-      On E:ERamDiskError do
-      Begin
-        msg:=decodeException(E.ArsenalCode);
-        If msg<>'' then OutputDebugString(PAnsiChar(msg));
-      end;
-      On E:Exception Do OutputDebugString(PAnsiChar(E.Message));
+      On E:ERamDiskError do DebugLog(decodeException(E.ArsenalCode));
+      On E:Exception Do DebugLog(E.Message);
     end;
   End
   Else Stopped:=True;

@@ -251,10 +251,14 @@ const
   Function ImScsiOpenScsiAdapter(var PortNumber:Byte):THandle;
   Function ImScsiDeviceIoControl(device:THandle; ControlCode: DWORD; var SrbIoControl: TSrbIoControl; Size, Timeout: DWORD; var ReturnLength: DWORD):Boolean;
   Function decodeException(code:TRamErrors):String;
+  Procedure DebugLog(msg:string;eventType:DWord = EVENTLOG_INFORMATION_TYPE);
 
 implementation
 
 Uses Math,Classes;
+
+Var
+  EventLogHandle:Integer;
 
 procedure RtlInitUnicodeString(DestinationString: PUnicodeString; SourceString: LPWSTR); stdcall; external 'ntdll.dll';
 function RtlNtStatusToDosError(Status: NTSTATUS): ULONG; stdcall; external 'ntdll.dll';
@@ -336,11 +340,11 @@ Begin
   ImScsiInitializeSrbIoBlock(SrbIoControl, Size, ControlCode, Timeout);
   if Not DeviceIoControl(Device, IOCTL_SCSI_MINIPORT, @SrbIoControl, Size, @SrbIoControl, Size, ReturnLength, NIL) then
   begin
-    OutputDebugString(PAnsiChar(SysErrorMessage(RtlNtStatusToDosError(SrbIoControl.ReturnCode))));
+    DebugLog(SysErrorMessage(RtlNtStatusToDosError(SrbIoControl.ReturnCode)),EVENTLOG_ERROR_TYPE);
     Result:=FALSE;
     Exit;
   end;
-  OutputDebugString(PAnsiChar(SysErrorMessage(RtlNtStatusToDosError(SrbIoControl.ReturnCode))));
+  DebugLog(SysErrorMessage(RtlNtStatusToDosError(SrbIoControl.ReturnCode)));
   Result:=SrbIoControl.ReturnCode >= 0;
 end;
 
@@ -466,4 +470,14 @@ Begin
   end;
 End;
 
+Procedure DebugLog(msg:string;eventType:DWord = EVENTLOG_INFORMATION_TYPE);
+Begin
+  ReportEvent(EventLogHandle,eventType,0,0,Nil,1,0,PChar(msg),Nil);
+end;
+
+Initialization
+  EventLogHandle:=RegisterEventSource(Nil,'Arsenal RamDisk');
+
+Finalization
+  DeregisterEventSource(EventLogHandle);
 end.

@@ -6,7 +6,7 @@ Function ImScsiRescanScsiAdapterAsync(AsyncFlag:Boolean):THandle;
 
 implementation
 
-uses Windows,SysUtils,Classes;
+uses Windows,SysUtils,Classes,Definitions;
 
 const
   CfgMgrDllName = 'cfgmgr32.dll';
@@ -36,7 +36,7 @@ begin
   status := CM_Locate_DevNode(dev_inst, rootid, 0);
   if status <> CR_SUCCESS then
   begin
-    OutputDebugString(PAnsiChar('Error scanning for hardware changes: $' + IntToHex(status,8)));
+    DebugLog('Error scanning for hardware changes: $' + IntToHex(status,8),EVENTLOG_ERROR_TYPE);
     Result:=status;
   end
   else Result:=CM_Reenumerate_DevNode(dev_inst, flags);

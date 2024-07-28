@@ -120,6 +120,8 @@ begin
 end;
 
 procedure TfrmUI.btnUnmountClick(Sender: TObject);
+var
+  msg:String;
 begin
   try
     ramDiskConfig.persistentFolder:=editFolder.Text;
@@ -131,7 +133,11 @@ begin
       UpdateDismounted;
     end;
   Except
-    On E:ERamDiskError do decodeException(E.ArsenalCode);
+    On E:ERamDiskError do
+    Begin
+      msg:=decodeException(E.ArsenalCode);
+      If msg<>'' then MessageDlg(msg,mtError,[mbOK],0);
+    end
   else raise;
   end;
 end;
@@ -323,6 +329,7 @@ end;
 procedure TfrmUI.FormShow(Sender: TObject);
 Var
   srvStatus:DWORD;
+  msg:String;
 begin
   // aim -a -s 50M -t vm -m x:
   UpdateLetters;
@@ -336,7 +343,11 @@ begin
     if GetRamDisk(ramDiskConfig) Then UpdateMounted
     Else UpdateDismounted;
   Except
-    On E:ERamDiskError do decodeException(E.ArsenalCode);
+    On E:ERamDiskError do
+    Begin
+      msg:=decodeException(E.ArsenalCode);
+      If msg<>'' then MessageDlg(msg,mtError,[mbOK],0);
+    end
   else raise;
   End;
 end;

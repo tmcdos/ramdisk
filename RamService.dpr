@@ -1,6 +1,7 @@
 program RamService;
 
 {$R 'manifest.res' 'manifest.rc'}
+{$DEFINE RAMDISK_SVC}
 
 uses
   SvcMgr,

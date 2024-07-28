@@ -88,17 +88,17 @@ var
   forceDismount: Boolean;
 Begin
   Result:=False;
-  OutputDebugString('Begin DetachRamDisk');
+  DebugLog('Begin DetachRamDisk');
   If existing.letter = #0 Then
   Begin
-    OutputDebugString('RamDisk has no drive letter attahed');
+    DebugLog('RamDisk has no drive letter attahed');
     adapter := ImScsiOpenScsiAdapter(portNumber);
-    OutputDebugString(PAnsiChar(Format('SCSI adapter handle = %u',[adapter])));
+    DebugLog(Format('SCSI adapter handle = %u',[adapter]));
     if adapter = INVALID_HANDLE_VALUE then
     begin
       dw:=GetLastError;
-      if dw = ERROR_FILE_NOT_FOUND then OutputDebugString('Arsenal Driver not installed')
-      else OutputDebugString(PAnsiChar(SysErrorMessage(dw)));
+      if dw = ERROR_FILE_NOT_FOUND then DebugLog('Arsenal Driver not installed',EVENTLOG_ERROR_TYPE)
+      else DebugLog(SysErrorMessage(dw),EVENTLOG_ERROR_TYPE);
       raise ERamDiskError.Create(RamNotInstalled);
     end;
     deviceNumber.LongNumber:=IMSCSI_ALL_DEVICES;
@@ -107,27 +107,27 @@ Begin
       dw:=GetLastError;
       if dw = ERROR_FILE_NOT_FOUND then
       begin
-        OutputDebugString('No devices found');
+        DebugLog('The SCSI device of the RAM-disk was not found',EVENTLOG_ERROR_TYPE);
         Exit;
       end
       else
       begin
-        OutputDebugString(PAnsiChar(SysErrorMessage(dw)));
+        DebugLog(SysErrorMessage(dw),EVENTLOG_ERROR_TYPE);
         Exit;
       end;
     end;
-    OutputDebugString('RamDisk device has been destroyed');
+    DebugLog('RamDisk device has been destroyed');
     Result:=True;
     Exit;
   end;
   if existing.synchronize And (existing.persistentFolder<>'') then SaveRamDisk(existing);
   forceDismount:=False;
-  OutputDebugString(PAnsiChar(Format('Trying to open volume %s',[existing.letter])));
+  DebugLog(Format('Trying to open volume %s',[existing.letter]));
   device := OpenVolume(existing.letter);
   if device = INVALID_HANDLE_VALUE then
   begin
     tmp:=GetLastError;
-    OutputDebugString(PAnsiChar(Format('Could not open the volume, error is "%s"',[SysErrorMessage(tmp)])));
+    DebugLog(Format('Could not open the volume, error is "%s"',[SysErrorMessage(tmp)]),EVENTLOG_ERROR_TYPE);
     case tmp of
       ERROR_INVALID_PARAMETER:
          // "This version of Windows only supports drive letters as mount points.\n"
@@ -146,40 +146,40 @@ Begin
     end;
   End;
   // Notify processes that this device is about to be removed.
-  OutputDebugString('Now notifying other processes that this device is about to be removed');
+  DebugLog('Now notifying other processes that this device is about to be removed');
   ImDiskNotifyRemovePending(WideChar(existing.letter));
-  OutputDebugString('Flushing OS file buffers');
+  DebugLog('Flushing OS file buffers');
   FlushFileBuffers(device);
 
   // Locking volume
   try
-    OutputDebugString('Locking the volume');
+    DebugLog('Locking the volume');
     if Not DeviceIoControl(device, FSCTL_LOCK_VOLUME, NIL, 0, NIL, 0, dw, NIL) then
     Begin
       forceDismount := TRUE;
-      OutputDebugString('Could not lock the volume - so trying a forced unmount');
+      DebugLog('Could not lock the volume - so trying a forced unmount');
     End;
     // Unmounting filesystem
     try
-      OutputDebugString('Trying to unmount the filesystem');
+      DebugLog('Trying to unmount the filesystem');
       if DeviceIoControl(device, FSCTL_DISMOUNT_VOLUME, NIL, 0, NIL, 0, dw, NIL) then
       begin
         if forceDismount then
         Begin
           DeviceIoControl(device, FSCTL_LOCK_VOLUME, NIL, 0, NIL, 0, dw, NIL);
-          OutputDebugString('Doing forced lock');
+          DebugLog('Doing forced lock');
         end;
         // Set prevent removal to false and eject the volume
         if PreventRemovalOfVolume(device, FALSE) then
         Begin
           AutoEjectVolume(device);
-          OutputDebugString('Ejected the volume');
+          DebugLog('Ejected the volume');
         End;
         Result:=True;
       end;
     finally
       DeviceIoControl(device, FSCTL_UNLOCK_VOLUME, NIL, 0, NIL, 0, dw, NIL);
-      OutputDebugString('Unlocked the volume');
+      DebugLog('Unlocked the volume');
     End;
   finally
     CloseHandle(device);
