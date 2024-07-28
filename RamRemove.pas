@@ -88,9 +88,12 @@ var
   forceDismount: Boolean;
 Begin
   Result:=False;
+  OutputDebugString('Begin DetachRamDisk');
   If existing.letter = #0 Then
   Begin
+    OutputDebugString('RamDisk has no drive letter attahed');
     adapter := ImScsiOpenScsiAdapter(portNumber);
+    OutputDebugString(PAnsiChar(Format('SCSI adapter handle = %u',[adapter])));
     if adapter = INVALID_HANDLE_VALUE then
     begin
       dw:=GetLastError;
@@ -113,15 +116,19 @@ Begin
         Exit;
       end;
     end;
+    OutputDebugString('RamDisk device has been destroyed');
     Result:=True;
     Exit;
   end;
   if existing.synchronize And (existing.persistentFolder<>'') then SaveRamDisk(existing);
   forceDismount:=False;
+  OutputDebugString(PAnsiChar(Format('Trying to open volume %s',[existing.letter])));
   device := OpenVolume(existing.letter);
   if device = INVALID_HANDLE_VALUE then
   begin
-    case GetLastError of
+    tmp:=GetLastError;
+    OutputDebugString(PAnsiChar(Format('Could not open the volume, error is "%s"',[SysErrorMessage(tmp)])));
+    case tmp of
       ERROR_INVALID_PARAMETER:
          // "This version of Windows only supports drive letters as mount points.\n"
          // "Windows 2000 or higher is required to support subdirectory mount points.\n",
@@ -135,28 +142,44 @@ Begin
         // ImScsiOemPrintF(stderr, "Not a mount point: '%1!ws!'", MountPoint);
         Exit;
     else
-      tmp:=GetLastError;
       raise Exception.Create(SysErrorMessage(tmp));
     end;
   End;
   // Notify processes that this device is about to be removed.
+  OutputDebugString('Now notifying other processes that this device is about to be removed');
   ImDiskNotifyRemovePending(WideChar(existing.letter));
+  OutputDebugString('Flushing OS file buffers');
   FlushFileBuffers(device);
 
   // Locking volume
   try
-    if Not DeviceIoControl(device, FSCTL_LOCK_VOLUME, NIL, 0, NIL, 0, dw, NIL) then forceDismount := TRUE;
+    OutputDebugString('Locking the volume');
+    if Not DeviceIoControl(device, FSCTL_LOCK_VOLUME, NIL, 0, NIL, 0, dw, NIL) then
+    Begin
+      forceDismount := TRUE;
+      OutputDebugString('Could not lock the volume - so trying a forced unmount');
+    End;
     // Unmounting filesystem
     try
+      OutputDebugString('Trying to unmount the filesystem');
       if DeviceIoControl(device, FSCTL_DISMOUNT_VOLUME, NIL, 0, NIL, 0, dw, NIL) then
       begin
-        if forceDismount then DeviceIoControl(device, FSCTL_LOCK_VOLUME, NIL, 0, NIL, 0, dw, NIL);
+        if forceDismount then
+        Begin
+          DeviceIoControl(device, FSCTL_LOCK_VOLUME, NIL, 0, NIL, 0, dw, NIL);
+          OutputDebugString('Doing forced lock');
+        end;
         // Set prevent removal to false and eject the volume
-        if PreventRemovalOfVolume(device, FALSE) then AutoEjectVolume(device);
+        if PreventRemovalOfVolume(device, FALSE) then
+        Begin
+          AutoEjectVolume(device);
+          OutputDebugString('Ejected the volume');
+        End;
         Result:=True;
       end;
     finally
       DeviceIoControl(device, FSCTL_UNLOCK_VOLUME, NIL, 0, NIL, 0, dw, NIL);
+      OutputDebugString('Unlocked the volume');
     End;
   finally
     CloseHandle(device);
@@ -165,4 +188,3 @@ Begin
 end;
 
 end.
- 

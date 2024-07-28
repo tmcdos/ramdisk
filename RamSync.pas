@@ -102,10 +102,16 @@ Var
   reg: TTntRegistry;
   tempDir:String;
 Begin
-  If (config.persistentFolder<>'') And DirectoryExists(config.persistentFolder) Then TreeCopy(WideIncludeTrailingPathDelimiter(config.persistentFolder),config.letter+':\');
+  OutputDebugString('Configuring RAM-disk');
+  If (config.persistentFolder<>'') And DirectoryExists(config.persistentFolder) Then
+  Begin
+    TreeCopy(WideIncludeTrailingPathDelimiter(config.persistentFolder),config.letter+':\');
+    OutputDebugStringW(PWideChar('RAM-disk was populated with content from ' + config.persistentFolder));
+  end;
   If config.useTemp Then
   Begin
     tempDir:=config.letter+':\TEMP';
+    OutputDebugString(PAnsiChar('Configuring TEMP folder as ' + tempDir));
     if CreateDir(tempDir) Then
     Begin
       reg:=Nil;
@@ -116,6 +122,7 @@ Begin
         Begin
           reg.WriteExpandString('TMP',tempDir);
           reg.WriteExpandString('TEMP',tempDir);
+          OutputDebugString('TMP and TEMP folders for all users were set');
         end;
         reg.CloseKey;
 
@@ -124,6 +131,7 @@ Begin
         Begin
           reg.WriteExpandString('TMP',tempDir);
           reg.WriteExpandString('TEMP',tempDir);
+          OutputDebugString('TMP and TEMP folders for the current user were set');
         end;
         reg.CloseKey;
       finally
@@ -143,13 +151,16 @@ Var
 Begin
   reg:=Nil;
   try
+    OutputDebugString('Switching to the default TEMP folder');
     reg:=TTntRegistry.Create(KEY_ALL_ACCESS);
     // read defaults
     reg.RootKey:=HKEY_USERS;
     if Reg.OpenKey('.DEFAULT\Environment', False) then
     Begin
       tmpFolder:=reg.ReadString('TMP');
+      OutputDebugString(PAnsiChar(Format('Default TMP folder = %s',[tmpFolder])));
       tempFolder:=reg.ReadString('TEMP');
+      OutputDebugString(PAnsiChar(Format('Default TEMP folder = %s',[tempFolder])));
     end;
     reg.CloseKey;
     // set active values
@@ -158,9 +169,17 @@ Begin
     Begin
       // restore default only if current setting was using the just unmounted Ramdisk
       tmp:=WideUpperCase(reg.ReadString('TMP'));
-      If (tmp<>'')And(tmp[1] = letter) then reg.WriteExpandString('TMP',tmpFolder);
+      If (tmp<>'')And(tmp[1] = letter) then
+      Begin
+        reg.WriteExpandString('TMP',tmpFolder);
+        OutputDebugString('Restoring TMP folder for all users');
+      End;
       tmp:=WideUpperCase(reg.ReadString('TEMP'));
-      If (tmp<>'')and(tmp[1] = letter) then reg.WriteExpandString('TEMP',tempFolder);
+      If (tmp<>'')and(tmp[1] = letter) then
+      Begin
+        reg.WriteExpandString('TEMP',tempFolder);
+        OutputDebugString('Restoring TEMP folder for all users');
+      End;
     end;
     reg.CloseKey;
 
@@ -168,9 +187,17 @@ Begin
     if Reg.OpenKey('Environment', True) then
     Begin
       tmp:=WideUpperCase(reg.ReadString('TMP'));
-      If (tmp<>'')and(tmp[1] = letter) then reg.WriteExpandString('TMP',tmpFolder);
+      If (tmp<>'')and(tmp[1] = letter) then
+      Begin
+        reg.WriteExpandString('TMP',tmpFolder);
+        OutputDebugString('Restoring TMP folder for the current user');
+      end;
       tmp:=WideUpperCase(reg.ReadString('TEMP'));
-      If (tmp<>'')and(tmp[1] = letter) then reg.WriteExpandString('TEMP',tempFolder);
+      If (tmp<>'')and(tmp[1] = letter) then
+      Begin
+        reg.WriteExpandString('TEMP',tempFolder);
+        OutputDebugString('Restoring TMP folder for the current user');
+      end;
     end;
     reg.CloseKey;
   finally
@@ -209,6 +236,7 @@ var
   SR: TSearchRecW;
   junction,current,source: WideString;
 Begin
+  OutputDebugStringW(PWideChar(WideFormat('Now persisting folder %s',[src])));
   if WideFindFirst(src+'*.*',faAnyFile,SR)<>0 then Exit;
   repeat
     if (SR.Name <> '.') and (SR.Name <> '..') then
@@ -246,6 +274,7 @@ procedure TreeDelete(const src,dest:WideString;excluded:TTntStringList);
 var
   SR: TSearchRecW;
 Begin
+  OutputDebugStringW(PWideChar(WideFormat('Now removing folder %s',[src])));
   if WideFindFirst(src+'*.*',faAnyFile,SR)<>0 then Exit;
   repeat
     if (SR.Name <> '.') and (SR.Name <> '..') then
@@ -290,7 +319,8 @@ Procedure SaveRamDisk(Var existing:TRamDisk);
 var
   list:TTntStringList;
 Begin
-  if DirectoryExists(existing.persistentFolder) then
+  OutputDebugString('Trying to persist RamDisk before unmount');
+  if WideDirectoryExists(existing.persistentFolder) then
   Begin
     list:=Nil;
     try
@@ -301,12 +331,18 @@ Begin
       list.Add('System Volume Information');
       // first we persist RAM-disk, excluding disabled paths
       TreeSave(existing.letter+':\',WideIncludeTrailingPathDelimiter(existing.persistentFolder),list);
+      OutputDebugString('RamDisk content was persisted');
       // then we delete the data that is not present on the RAM-disk
-      if existing.deleteOld then TreeDelete(WideIncludeTrailingPathDelimiter(existing.persistentFolder),existing.letter+':\',list);
+      if existing.deleteOld then
+      Begin
+        TreeDelete(WideIncludeTrailingPathDelimiter(existing.persistentFolder),existing.letter+':\',list);
+        OutputDebugString('Obsolete data inside the synchronization folder was removed');
+      End;
     Finally
       list.Free;
     end;
-  end;
+  End
+  else OutputDebugStringW(PWideChar(WideFormat('Folder "%s" does not exist',[existing.persistentFolder])));
 end;
 
 end.

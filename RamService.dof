@@ -90,7 +90,7 @@ MaxStackSize=1048576
 ImageBase=4194304
 ExeDescription=
 [Directories]
-OutputDir=
+OutputDir=bin
 UnitOutputDir=
 PackageDLLOutputDir=
 PackageDCPOutputDir=
@@ -135,8 +135,15 @@ ProductName=
 ProductVersion=1.0.0.0
 Comments=
 [Excluded Packages]
-C:\Program Files (x86)\Borland\Delphi7\Bin\indy70.bpl=Internet Direct (Indy) for D7
+c:\Program Files (x86)\Borland\Bpl\prgInternet6.bpl=Progsan Internet Components
 c:\Program Files (x86)\Borland\Bpl\kctrls6.bpl=KStringGrid component
+[HistoryLists\hlUnitAliases]
+Count=1
+Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
+[HistoryLists\hlOutputDirectorry]
+Count=2
+Item0=bin
+Item1=DCU
 [Exception Log]
 EurekaLog Version=6105
 Activate=0

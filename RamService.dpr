@@ -10,6 +10,7 @@ uses
 
 begin
   Application.Initialize;
+  Application.Title := 'RamDisk service';
   Application.CreateForm(TArsenalRamDisk, ArsenalRamDisk);
   Application.Run;
 end.

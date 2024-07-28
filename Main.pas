@@ -66,24 +66,9 @@ const
 Var
   ramDiskConfig: TRamDisk;
 
-Procedure decodeException(code:TRamErrors);
-Var
-  msg: String;
-Begin
-  msg:='';
-  Case code Of
-    RamNotInstalled: msg:='Arsenal Driver is not installed';
-    RamNotAccessible: msg:='Arsenal Driver is not accessible';
-    RamCantEnumDrives: msg:='Can not enumerate disk volumes';
-    RamDriverVersion: msg:='Arsenal Driver is old version';
-    RamCantCreate: msg:='Could not create RAM-disk';
-    RamCantFormat: msg:='Could not create a partition on the RAM-disk';
-    RamNoFreeLetter: msg:='No free drive letters available';
-  end;
-  if msg<>'' then MessageDlg(msg,mtError,[mbOK],0);
-End;
-
 procedure TfrmUI.btnApplyClick(Sender: TObject);
+var
+  msg:String;
 begin
   SaveSettings;
   If not TryStrToInt64(vdSize.Text,ramDiskConfig.size) Then MessageDlg('Invalid disk size',mtError,[mbOK],0)
@@ -104,7 +89,11 @@ begin
         UpdateMounted;
       end;
     except
-      On E:ERamDiskError do decodeException(E.ArsenalCode);
+      On E:ERamDiskError do
+      Begin
+        msg:=decodeException(E.ArsenalCode);
+        If msg<>'' then MessageDlg(msg,mtError,[mbOK],0);
+      end;
     else raise;
     End;
   end;

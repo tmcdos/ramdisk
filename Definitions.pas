@@ -250,6 +250,7 @@ const
   Function ImDiskOpenDeviceByName(FileName:PUnicodeString; AccessMode:DWORD):THandle;
   Function ImScsiOpenScsiAdapter(var PortNumber:Byte):THandle;
   Function ImScsiDeviceIoControl(device:THandle; ControlCode: DWORD; var SrbIoControl: TSrbIoControl; Size, Timeout: DWORD; var ReturnLength: DWORD):Boolean;
+  Function decodeException(code:TRamErrors):String;
 
 implementation
 
@@ -450,5 +451,19 @@ begin
   end;
   Result:=['C'..'Z'] - used; // exclude floppy drives
 end;
+
+Function decodeException(code:TRamErrors):String;
+Begin
+  Result:='';
+  Case code Of
+    RamNotInstalled: Result:='Arsenal Driver is not installed';
+    RamNotAccessible: Result:='Arsenal Driver is not accessible';
+    RamCantEnumDrives: Result:='Can not enumerate disk volumes';
+    RamDriverVersion: Result:='Arsenal Driver is old version';
+    RamCantCreate: Result:='Could not create RAM-disk';
+    RamCantFormat: Result:='Could not create a partition on the RAM-disk';
+    RamNoFreeLetter: Result:='No free drive letters available';
+  end;
+End;
 
 end.
