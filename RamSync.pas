@@ -295,6 +295,9 @@ Begin
   WideFindClose(SR);
 end;
 
+(*
+
+// old split path
 Procedure SplitPath(const path:WideString;var list:TStrArray);
 var
   oldPos,newPos,k:Integer;
@@ -313,6 +316,83 @@ Begin
     Inc(k);
   Until newPos=0;
   SetLength(list,k);
+end;
+
+*)
+
+// Make sure to place WidePosExChar above SplitPath or in an interface section
+// New WidePosExChar by Gemini 2.5 Pro
+function WidePosExChar(const SearchChar: WideChar; const S: WideString; StartPos: Integer = 1): Integer;
+var
+  I: Integer;
+begin
+  Result := 0; // Not found by default
+  for I := StartPos to Length(S) do
+  begin
+    if S[I] = SearchChar then
+    begin
+      Result := I;
+      Exit;
+    end;
+  end;
+end;
+
+// Assuming TStrArray is defined as array of WideString, e.g.:
+// type
+//   TStrArray = array of WideString;
+
+// new SplitPath by Gemini 2.5 Pro
+Procedure SplitPath(const path:WideString;var list:TStrArray);
+var
+  oldPos, newPos, k: Integer;
+Begin
+  // Initialize list with a reasonable capacity. Length(path) is an overestimate,
+  // but ensures enough initial space. It will be trimmed later.
+  SetLength(List, Length(path) div 2 + 1); // More realistic initial size for paths
+  if Length(path) = 0 then // Handle empty path case
+  begin
+    SetLength(list, 0);
+    Exit;
+  end;
+
+  k := 0;
+  oldPos := 1;
+  Repeat
+    // Use your WidePosExChar function here
+    newPos := WidePosExChar('\', path, oldPos);
+
+    if newPos = 0 then // No more delimiters found, this is the last segment
+    Begin
+      list[k] := Copy(path, oldPos, MaxInt); // Copy to the end of the string
+      Inc(k);
+      Break; // Exit the loop as we've processed the last segment
+    End
+    Else // Delimiter found
+    Begin
+      // Copy the segment from oldPos up to (but not including) the delimiter
+      list[k] := Copy(path, oldPos, newPos - oldPos);
+      Inc(k);
+      // Move oldPos to the character *after* the delimiter
+      oldPos := newPos + 1;
+    End;
+
+    // Check if oldPos has gone beyond the string length,
+    // which can happen if the path ends with a delimiter.
+    // If it does, and there's an empty segment at the end, add it.
+    if (oldPos > Length(path)) and (newPos <> 0) then // newPos=0 indicates last segment was handled
+    begin
+      // Add an empty string if the path ended with a backslash and we're at the end
+      if (path[Length(path)] = '\') then // Only if the original string ended with '\'
+      begin
+        list[k] := '';
+        Inc(k);
+      end;
+      Break;
+    end;
+
+  Until False; // Use Break to exit the loop once last segment is processed
+
+  SetLength(list, k); // Trim the list to the actual number of segments
 end;
 
 Procedure SaveRamDisk(Var existing:TRamDisk);

@@ -210,45 +210,102 @@ Begin
   End;
 end;
 
+// Place this function in a common unit or in the same unit as your form.
+// By Gemini 2.5 Pro
+function WidePosEx(const SubStr: WideString; const S: WideString; StartPos: Integer = 1): Integer;
+var
+  I, J: Integer;
+  Found: Boolean;
+begin
+  Result := 0;
+  if (Length(SubStr) = 0) then
+  begin
+    if (StartPos > Length(S) + 1) or (StartPos < 1) then
+      Exit;
+    Result := StartPos;
+    Exit;
+  end;
+
+  if (StartPos < 1) or (StartPos > Length(S) - Length(SubStr) + 1) then
+    Exit;
+
+  for I := StartPos to Length(S) - Length(SubStr) + 1 do
+  begin
+    Found := True;
+    for J := 1 to Length(SubStr) do
+    begin
+      if S[I + J - 1] <> SubStr[J] then
+      begin
+        Found := False;
+        Break;
+      end;
+    end;
+    if Found then
+    begin
+      Result := I;
+      Exit;
+    end;
+  end;
+end;
+
+// By Gemini 2.5 Pro
 Procedure TfrmUI.SaveSettings;
 var
   reg: TTntRegistry;
   diskSize: Int64;
-  i:Integer;
-  s:WideString;
+  i: Integer;
+  s: WideString;
 Begin
-  reg:=TTntRegistry.Create(KEY_WRITE);
+  reg := TTntRegistry.Create(KEY_WRITE);
   Try
-    reg.RootKey:=HKEY_LOCAL_MACHINE;
-    if Reg.OpenKey('\SYSTEM\CurrentControlSet\Services\'+serviceName, True) then
+    reg.RootKey := HKEY_LOCAL_MACHINE;
+    if Reg.OpenKey('\SYSTEM\CurrentControlSet\Services\' + serviceName, True) then
     begin
-      diskSize:=StrToInt64(vdSize.Text);
-      If radioMB.Checked then diskSize:=diskSize Shl 20 Else diskSize:=diskSize shl 30;
-      i:=0;
-      while i<memoIgnore.Lines.Count Do
-      Begin
-        s:=Trim(memoIgnore.Lines[i]);
-        If s[2]=':' then s:=Copy(s,4,MaxInt);
-        If (s='')or(WidePosEx('\',s)>0)or(WidePosEx('/',s)>0) then memoIgnore.Lines.Delete(i)
+      diskSize := StrToInt64(vdSize.Text);
+      If radioMB.Checked then
+        diskSize := diskSize shl 20
+      Else
+        diskSize := diskSize shl 30;
+
+      // Corrected loop logic to handle deletions without skipping items
+      i := 0;
+      while i < memoIgnore.Lines.Count do
+      begin
+        s := Trim(memoIgnore.Lines[i]);
+        
+        // This is a check for a drive letter and colon, e.g., "C:"
+        if (Length(s) >= 2) and (s[2] = ':') then
+          s := Copy(s, 4, MaxInt); // Correctly gets the rest of the path
+
+        // Check for empty string, backslash, or forward slash
+        // We use the custom WidePosEx function to find the characters
+        if (s = '') or (WidePosEx('\', s) > 0) or (WidePosEx('/', s) > 0) then
+        begin
+          memoIgnore.Lines.Delete(i);
+          // Do NOT increment i, because the next item is now at the same index
+        end
         else
-        Begin
-          memoIgnore.Lines[i]:=s;
-          Inc(i);
+        begin
+          memoIgnore.Lines[i] := s;
+          Inc(i); // ONLY increment if a line was NOT deleted
         end;
       end;
-      reg.WriteString('DiskSize',IntToStr(diskSize));
-      reg.WriteString('DriveLetter',comboLetter.Text);
-      reg.WriteString('LoadContent',editFolder.Text);
-      reg.WriteString('ExcludeFolders',memoIgnore.Lines.Text);
-      reg.WriteBool('UseTempFolder',chkTemp.Checked);
-      reg.WriteBool('SyncContent',chkSync.Checked);
-      reg.WriteBool('DeleteOld',chkDelete.Checked);
+      
+      // The rest of your code remains the same
+      reg.WriteString('DiskSize', IntToStr(diskSize));
+      reg.WriteString('DriveLetter', comboLetter.Text);
+      reg.WriteString('LoadContent', editFolder.Text);
+      reg.WriteString('ExcludeFolders', memoIgnore.Lines.Text);
+      reg.WriteBool('UseTempFolder', chkTemp.Checked);
+      reg.WriteBool('SyncContent', chkSync.Checked);
+      reg.WriteBool('DeleteOld', chkDelete.Checked);
       Reg.CloseKey;
     end;
   Finally
     reg.Free;
   End;
 end;
+
 
 procedure TfrmUI.UpdateLetters;
 var
