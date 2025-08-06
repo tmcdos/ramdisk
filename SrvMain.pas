@@ -13,7 +13,7 @@ type
     procedure ServiceStart(Sender: TService; var Started: Boolean);
     procedure ServiceStop(Sender: TService; var Stopped: Boolean);
   private
-    { Private declarations }
+    FShutdownThread: TThread;
   public
     function GetServiceController: TServiceController; override;
     { Public declarations }
@@ -28,8 +28,20 @@ implementation
 
 Uses TntRegistry,Definitions,RamCreate,RamRemove;
 
+Type
+  TShutdownThread = class(TThread)
+  protected
+    procedure Execute; override;
+  end;
+
 Var
   config:TRamDisk;
+
+procedure TShutdownThread.Execute;
+begin
+  inherited;
+  DetachRamDisk(config);
+end;
 
 procedure LoadSettings;
 var
@@ -114,17 +126,30 @@ end;
 
 procedure TArsenalRamDisk.ServiceExecute(Sender: TService);
 begin
-  while not Terminated do ServiceThread.ProcessRequests(True);
+  while not Terminated do
+  begin
+    ServiceThread.ProcessRequests(True);
+  end;
+  if FShutdownThread <> nil then
+  begin
+    FShutdownThread.WaitFor;
+  end;
 end;
 
 procedure TArsenalRamDisk.ServiceShutdown(Sender: TService);
 begin
   DebugLog('RamDisk service initiated shutdown');
-  DetachRamDisk(config);
+  if FShutdownThread = nil then
+  begin
+    FShutdownThread := TShutdownThread.Create(False);
+    FShutdownThread.FreeOnTerminate := True;
+  end;
+  inherited;
 end;
 
 procedure TArsenalRamDisk.ServiceStart(Sender: TService; var Started: Boolean);
 begin
+  FShutdownThread := nil;
   DebugLog('RamDisk service was started');
   LoadSettings;
   if (config.size<>0) then
@@ -139,17 +164,21 @@ end;
 procedure TArsenalRamDisk.ServiceStop(Sender: TService; var Stopped: Boolean);
 begin
   DebugLog('RamDisk service is being stopped');
-  if config.letter <> #0 then
-  begin
-    DebugLog('Trying to unmount RamDisk');
-    try
-      If DetachRamDisk(config) then Stopped:=True;
-    except
-      On E:ERamDiskError do DebugLog(decodeException(E.ArsenalCode));
-      On E:Exception Do DebugLog(E.Message);
-    end;
-  End
-  Else Stopped:=True;
+  ReportStatus;
+  try
+    if config.letter <> #0 then
+    begin
+      DebugLog('Trying to unmount RamDisk');
+      if FShutdownThread = nil then
+      begin
+        FShutdownThread := TShutdownThread.Create(False);
+        FShutdownThread.FreeOnTerminate := True;
+      end;
+    end
+    Else Stopped:=True;
+  finally
+    inherited;
+  end;
 end;
 
 end.
