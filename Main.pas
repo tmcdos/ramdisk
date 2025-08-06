@@ -30,6 +30,7 @@ type
     memoIgnore: TTntMemo;
     btnInstall: TButton;
     btnUninstall: TButton;
+    txtExcludeHelp: TLabel;
     procedure btnApplyClick(Sender: TObject);
     procedure btnInstallClick(Sender: TObject);
     procedure btnLoadClick(Sender: TObject);
@@ -58,13 +59,50 @@ implementation
 
 {$R *.dfm}
 
-Uses Definitions,RamDetect,RamRemove,RamCreate,Types,StrUtils,WinSvc,TntRegistry,TntFileCtrl,TntSysUtils;
+Uses Definitions,RamDetect,RamRemove,RamCreate,Types,StrUtils,WinSvc,TntRegistry,TntFileCtrl,TntWideStrUtils;
 
 const
   serviceName = 'ArsenalRamDisk';
 
 Var
   ramDiskConfig: TRamDisk;
+
+procedure WStrDelete(var S: WideString; Index, Count: Integer);
+var
+  L, N: Integer;
+  NewStr: PWideChar;
+begin
+  L := Length(S);
+  if (L > 0) and (Index >= 1) and (Index <= L) and (Count > 0) then
+  begin
+    Dec(Index);
+    N := L - Index - Count;
+    if N < 0 then N := 0;
+    if (Index = 0) and (N = 0) then NewStr := nil else
+    begin
+      NewStr := WStrAlloc(Index + N);
+      if Index > 0 then
+        Move(Pointer(S)^, NewStr^, Index * 2);
+      if N > 0 then
+        Move(PWideChar(Pointer(S))[L - N], NewStr[Index], N * 2);
+    end;
+    S := WStrPas(NewStr);
+    WStrDispose(NewStr);
+  end;
+end;
+
+function WidePosEx(const SubStr, S: widestring; Offset: Integer = 1): Integer;
+var
+  i: integer;
+  tmp: widestring;
+begin
+  Result := 0;
+  tmp := S;
+  WStrDelete(tmp,1,Offset);
+  i := Pos(SubStr, tmp);
+  if (i > 0) then
+    Result := Offset + i;
+end;
 
 procedure TfrmUI.btnApplyClick(Sender: TObject);
 var
@@ -228,7 +266,7 @@ Begin
       while i<memoIgnore.Lines.Count Do
       Begin
         s:=Trim(memoIgnore.Lines[i]);
-        If s[2]=':' then s:=Copy(s,4,MaxInt);
+        If (Length(s) >= 2) And (s[2]=':') then s:=Copy(s,4,MaxInt);
         If (s='')or(WidePosEx('\',s)>0)or(WidePosEx('/',s)>0) then memoIgnore.Lines.Delete(i)
         else
         Begin

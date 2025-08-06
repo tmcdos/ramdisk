@@ -294,7 +294,7 @@ Begin
   Until WideFindNext(SR) <> 0;
   WideFindClose(SR);
 end;
-
+{
 Procedure SplitPath(const path:WideString;var list:TStrArray);
 var
   oldPos,newPos,k:Integer;
@@ -307,14 +307,14 @@ Begin
     if newPos=0 then list[k]:=Copy(path,oldPos,MaxInt)
     Else
     Begin
-      list[k]:=Copy(path,oldPos,newPos);
+      list[k]:=Copy(path,oldPos,newPos - oldPos);
       oldPos:=newPos;
     end;
     Inc(k);
   Until newPos=0;
   SetLength(list,k);
 end;
-
+}
 Procedure SaveRamDisk(Var existing:TRamDisk);
 var
   list:TTntStringList;

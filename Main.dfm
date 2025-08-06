@@ -108,16 +108,29 @@ object frmUI: TfrmUI
     OnClick = chkSyncClick
   end
   object grpSync: TGroupBox
-    Left = 16
-    Top = 220
-    Width = 269
-    Height = 169
-    Caption = ' Do not persist these folders (no wildcards) '
+    Left = 12
+    Top = 212
+    Width = 274
+    Height = 177
+    Caption = ' Do not persist these folders '
     Enabled = False
     TabOrder = 8
+    object txtExcludeHelp: TLabel
+      Left = 6
+      Top = 18
+      Width = 260
+      Height = 13
+      Caption = 'No nesting - only root folders and no wildcards'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -11
+      Font.Name = 'Tahoma'
+      Font.Style = [fsBold]
+      ParentFont = False
+    end
     object chkDelete: TCheckBox
       Left = 8
-      Top = 24
+      Top = 40
       Width = 249
       Height = 17
       Hint = 
@@ -130,9 +143,9 @@ object frmUI: TfrmUI
     end
     object memoIgnore: TTntMemo
       Left = 2
-      Top = 52
-      Width = 265
-      Height = 115
+      Top = 68
+      Width = 270
+      Height = 107
       Hint = 
         'One folder per line,'#13#10'no wildcards, no subfolders,'#13#10'no drive let' +
         'ter - folders are'#13#10'relative to the root of RAM-disk'

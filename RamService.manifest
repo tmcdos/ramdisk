@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0"> 
-  <assemblyIdentity version="1.0.0.0" processorArchitecture="X86" name="SkypeLog" type="win32"/> 
+  <assemblyIdentity version="1.0.0.0" processorArchitecture="X86" name="RamdiskService" type="win32"/> 
   <description>Arsenal RAM-disk service</description> 
   <!-- Identify the application security requirements. -->
   <ms_asmv2:trustInfo xmlns:ms_asmv2="urn:schemas-microsoft-com:asm.v2">
