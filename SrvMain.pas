@@ -151,7 +151,18 @@ procedure TArsenalRamDisk.ServiceStart(Sender: TService; var Started: Boolean);
 begin
   FShutdownThread := nil;
   DebugLog('RamDisk service was started');
+
+  // Report that we are starting, with a 60 second timeout
+  WaitHint := 60000;
+  CheckPoint := 1;
+  ReportStatus;
+
   LoadSettings;
+
+  // Report progress
+  CheckPoint := 2;
+  ReportStatus;
+
   if (config.size<>0) then
   try
     if CreateRamDisk(config,False) Then Started:=True;
@@ -159,11 +170,17 @@ begin
     On E:ERamDiskError do DebugLog(decodeException(E.ArsenalCode));
     On E:Exception do DebugLog(E.Message);
   End;
+
+  // Reset WaitHint
+  WaitHint := 0;
 end;
 
 procedure TArsenalRamDisk.ServiceStop(Sender: TService; var Stopped: Boolean);
 begin
   DebugLog('RamDisk service is being stopped');
+  // Report that we are stopping, with a 60 second timeout
+  WaitHint := 60000;
+  CheckPoint := 1;
   ReportStatus;
   try
     if config.letter <> #0 then
@@ -179,6 +196,8 @@ begin
   finally
     inherited;
   end;
+  // Reset WaitHint
+  WaitHint := 0;
 end;
 
 end.
