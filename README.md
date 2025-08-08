@@ -121,6 +121,42 @@ _
 "Description"="Arsenal RAM-disk"
 ```
 
+## Updating the tool when new version is released
+
+The procedure is as follows:
+
+1. Start RamdiskUI
+2. Click on `Unmount` button
+3. Press and hold the WIN key on your keyboard, then press "R" key
+4. When the `Run` dialog appears - type `services.msc` and press ENTER key
+5. Find the `Arsenal RAM-disk` service and stop it
+6. Click on `Uninstall service` button in RamdiskUI and then close the application 
+7. Extract the ZIP file with the new version of `RamdiskUI.exe` and `RamService.exe`
+8. Copy the new files onto the old ones (overwrite)
+9. Start the new RamdiskUI
+10. Click on `Install service` button  
+11. Go back to the "Services" and check that the `Arsenal RAM-disk` service is running
+12. If not running - start it manually
+13. Go back to the RamdiskUI and mount the RAM-disk
+14. Close the RamdiskUI 
+
+## Updating the Arsenal driver
+
+You can check for new versions of the driver on its [Github page](https://github.com/ArsenalRecon/Arsenal-Image-Mounter/commits/master/DriverSetup)
+The procedure is as follows:
+
+1. Important! Make sure there are no open files on the RAM-disk and that no application has its current working directory pointing to any folder on the RAM-disk
+2. Start RamdiskUI and unmount the RAM-disk
+3. Press and hold the WIN key on your keyboard, then press "R" key
+4. When the `Run` dialog appears - type `services.msc` and press ENTER key
+5. Find the `Arsenal RAM-disk` service and stop it
+6. Open Windows Device Manager, go to "Storage Controllers" node in the device tree and uninstall the "Arsenal Image Mounter" device
+7. Download and extract the latest version of the Arsenal driver
+8. Enter the subfolder which matches the version of your OS (e.g. `Win7`)
+9. Right-click onto `phdskmnt.inf` and choose "Install" from the context menu
+10. Go back to the "Services" and start the `Arsenal RAM-disk` service
+11. Go back to the RamdiskUI and mount the RAM-disk 
+
 # LICENSE
 
 MIT License
