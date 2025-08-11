@@ -125,16 +125,12 @@ _
 
 The procedure is as follows:
 
-1. Start RamdiskUI
-2. Click on `Unmount` button and then close the application
-3. Press and hold the WIN key on your keyboard, then press "R" key
-4. When the `Run` dialog appears - type `net stop ArsenalRamDisk` and press ENTER key
-5. Extract the ZIP file with the new version of `RamdiskUI.exe` and `RamService.exe`
-6. Copy the new files onto the old ones (overwrite)
-7. Press and hold the WIN key on your keyboard, then press "R" key
-8. When the `Run` dialog appears - type `net start ArsenalRamDisk` and press ENTER key
-9. Start the new RamdiskUI and mount the RAM-disk
-10. Close the RamdiskUI 
+1. Press and hold the WIN key on your keyboard, then press "R" key
+2. When the `Run` dialog appears - type `net stop ArsenalRamDisk` and press ENTER key. The service will unmount the RAM-disk and then stop itself.
+3. Extract the ZIP file with the new version of `RamdiskUI.exe` and `RamService.exe`
+4. Copy the new files onto the old ones (overwrite)
+5. Press and hold the WIN key on your keyboard, then press "R" key
+6. When the `Run` dialog appears - type `net start ArsenalRamDisk` and press ENTER key. The service will auto-mount the RAM-disk after starting.
 
 ## Updating the Arsenal driver
 
@@ -142,16 +138,14 @@ You can check for new versions of the driver on its [Github page](https://github
 The procedure is as follows:
 
 1. Important! Make sure there are no open files on the RAM-disk and that no application has its current working directory pointing to any folder on the RAM-disk
-2. Start RamdiskUI and unmount the RAM-disk
-3. Press and hold the WIN key on your keyboard, then press "R" key
-4. When the `Run` dialog appears - type `net stop ArsenalRamDisk` and press ENTER key
-5. Open Windows Device Manager, go to "Storage Controllers" node in the device tree and uninstall the "Arsenal Image Mounter" device
-6. Download and extract the latest version of the Arsenal driver
-7. Enter the subfolder which matches the version of your OS (e.g. `Win7`)
-8. Right-click onto `phdskmnt.inf` and choose "Install" from the context menu
-9. Press and hold the WIN key on your keyboard, then press "R" key
-10. When the `Run` dialog appears - type `net start ArsenalRamDisk` and press ENTER key
-11. Go back to the RamdiskUI and mount the RAM-disk 
+2. Press and hold the WIN key on your keyboard, then press "R" key
+3. When the `Run` dialog appears - type `net stop ArsenalRamDisk` and press ENTER key. The service will unmount the RAM-disk and then stop itself.
+4. Open Windows Device Manager, go to "Storage Controllers" node in the device tree and uninstall the "Arsenal Image Mounter" device
+5. Download and extract the latest version of the Arsenal driver
+6. Enter the subfolder which matches the version of your OS (e.g. `Win7`)
+7. Right-click onto `phdskmnt.inf` and choose "Install" from the context menu
+8. Press and hold the WIN key on your keyboard, then press "R" key
+9. When the `Run` dialog appears - type `net start ArsenalRamDisk` and press ENTER key. The service will auto-mount the RAM-disk after starting.
 
 # LICENSE
 
