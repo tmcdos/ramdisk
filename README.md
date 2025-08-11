@@ -121,6 +121,17 @@ _
 "Description"="Arsenal RAM-disk"
 ```
 
+## Recycle Bin
+
+As discussed in [issue 13](https://github.com/tmcdos/ramdisk/issues/13), RAM-disks created by the Arsenal Image Mounter are using the SCSI-subsystem rather than Direct-I/O (unlike e.g. ImDisk)
+Since SCSI disks are recognized by the Volume Manager and this tool marks the RAM-disk as `fixed` (rather than `removable` / `external`)- Windows by default puts a hidden $RECYCLE.BIN folder on the RAM-disk
+and deleted files are kept there rather than immediately deleted.
+This can be changed through the **RecycleBin** icon on the desktop as shown on the screenshot
+
+<img width="507" height="569" alt="Image" src="https://github.com/user-attachments/assets/e315905f-95d2-4d41-9e9e-a44f96683cbd" />
+ 
+or disabled globally as explained in [https://superuser.com/questions/1212033/how-can-i-disable-recycle-bin-globally-in-windows-8-1](https://superuser.com/questions/1212033/how-can-i-disable-recycle-bin-globally-in-windows-8-1)
+
 ## Updating the tool when new version is released
 
 The procedure is as follows:
