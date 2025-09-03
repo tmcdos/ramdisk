@@ -98,7 +98,7 @@ Begin
     begin
       dw:=GetLastError;
       if dw = ERROR_FILE_NOT_FOUND then DebugLog('Arsenal Driver not installed',EVENTLOG_ERROR_TYPE)
-      else DebugLog(SysErrorMessage(dw),EVENTLOG_ERROR_TYPE);
+      else DebugLog('Can not open the SCSI adapter when detaching RAM-disk = ' + SysErrorMessage(dw),EVENTLOG_ERROR_TYPE);
       raise ERamDiskError.Create(RamNotInstalled);
     end;
     deviceNumber.LongNumber:=IMSCSI_ALL_DEVICES;
@@ -112,7 +112,7 @@ Begin
       end
       else
       begin
-        DebugLog(SysErrorMessage(dw),EVENTLOG_ERROR_TYPE);
+        DebugLog('Can not remove the SCSI adapter = ' + SysErrorMessage(dw),EVENTLOG_ERROR_TYPE);
         Exit;
       end;
     end;

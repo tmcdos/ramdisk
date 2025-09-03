@@ -131,8 +131,8 @@ begin
   try
     if CreateRamDisk(config,False) Then Started:=True;
   except
-    On E:ERamDiskError do DebugLog(decodeException(E.ArsenalCode));
-    On E:Exception do DebugLog(E.Message);
+    On E:ERamDiskError do DebugLog('Service could not create RAM-disk, error = ' + decodeException(E.ArsenalCode));
+    On E:Exception do DebugLog('Exception in service start = ' + E.Message);
   End;
 end;
 
@@ -145,8 +145,8 @@ begin
     try
       If DetachRamDisk(config) then Stopped:=True;
     except
-      On E:ERamDiskError do DebugLog(decodeException(E.ArsenalCode));
-      On E:Exception Do DebugLog(E.Message);
+      On E:ERamDiskError do DebugLog('Service could not destroy RAM-disk, error = ' + decodeException(E.ArsenalCode));
+      On E:Exception Do DebugLog('Exception in service stop = ' + E.Message);
     end;
   End
   Else Stopped:=True;

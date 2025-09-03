@@ -26,26 +26,38 @@ var
   dw: DWORD;
   dev_path: WideString;
   config:TScsiDeviceConfig;
-  i, len: Integer;
+  i, len, multiple: Integer;
   devices: TStringList;
   address: TScsiAddress;
   device_number: TStorageDeviceNumber;
   disk_size: Int64;
 Begin
-  SetLength(dosDevs, MAX_DOS_NAMES);
   disk_number:= -1;
   Result:=INVALID_HANDLE_VALUE;
-  len:=QueryDosDevice(NIL, PAnsiChar(dosdevs), Length(dosdevs));
-  // ImScsiDebugMessage(L"Error opening SCSI port %1!i!: %2!ws!", PortNumber & 0xFF, (LPCWSTR)errmsg);
-  if len=0 then Exit;
-
+  multiple:=1;
+  Repeat
+    SetLength(dosDevs, MAX_DOS_NAMES * multiple);
+    len:=QueryDosDevice(NIL, PAnsiChar(dosdevs), Length(dosdevs));
+    // ImScsiDebugMessage(L"Error opening SCSI port %1!i!: %2!ws!", PortNumber & 0xFF, (LPCWSTR)errmsg);
+    if len=0 then Inc(multiple);
+    if multiple > 10 then
+    begin
+      DebugLog(Format('QueryDosDevice can not fit DOS device names inside %d bytes',[Length(dosdevs)]),EVENTLOG_ERROR_TYPE);
+      Exit;
+    end;
+  Until len <> 0;
   adapter := ImScsiOpenScsiAdapterByScsiPortNumber(PortNumber);
-  if adapter = INVALID_HANDLE_VALUE then Exit;
+  if adapter = INVALID_HANDLE_VALUE then
+  Begin
+    DebugLog('Could not open SCSI adapter inside ImScsiOpenDiskByDeviceNumber',EVENTLOG_ERROR_TYPE);
+    Exit;
+  end;
 
   config.DeviceNumber := DeviceNumber;
   If not ImScsiQueryDevice(adapter, @config, SizeOf(TScsiDeviceConfig)) Then
   begin
     CloseHandle(adapter);
+    DebugLog('Could not get SCSI device config inside ImScsiOpenDiskByDeviceNumber',EVENTLOG_ERROR_TYPE);
     Exit;
   end;
   CloseHandle(adapter);
@@ -95,7 +107,11 @@ Begin
         ERROR_INVALID_PARAMETER,
         ERROR_INVALID_FUNCTION,
         ERROR_NOT_SUPPORTED,
-        ERROR_IO_DEVICE: break;
+        ERROR_IO_DEVICE:
+        Begin
+          DebugLog(Format('Could not get the SCSI address of device %s',[devices[i]]),EVENTLOG_ERROR_TYPE);
+          break;
+        end;
       end;
       CloseHandle(disk);
     end;
