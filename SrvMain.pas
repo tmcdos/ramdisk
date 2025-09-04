@@ -6,6 +6,15 @@ uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, SvcMgr, Dialogs;
 
 type
+  TStartThread = class(TThread)
+  protected
+    procedure Execute; override;
+  end;
+  TStopThread = class(TThread)
+  protected
+    procedure Execute; override;
+  end;
+
   TArsenalRamDisk = class(TService)
     procedure ServiceAfterInstall(Sender: TService);
     procedure ServiceExecute(Sender: TService);
@@ -14,9 +23,11 @@ type
     procedure ServiceStop(Sender: TService; var Stopped: Boolean);
   private
     { Private declarations }
+    FStartThread: TStartThread;
+    FStopThread: TStopThread;
   public
-    function GetServiceController: TServiceController; override;
     { Public declarations }
+    function GetServiceController: TServiceController; override;
   end;
 
 var
@@ -30,6 +41,36 @@ Uses TntRegistry,Definitions,RamCreate,RamRemove;
 
 Var
   config:TRamDisk;
+
+procedure TStartThread.Execute;
+Begin
+  Inherited;
+  try
+    if CreateRamDisk(config,False) Then
+    begin
+      ReturnValue:=1;
+      DebugLog('RamDisk service was started');
+    end;
+  except
+    On E:ERamDiskError do
+    Begin
+      ReturnValue:=-2;
+      DebugLog('Service could not create RAM-disk, error = ' + decodeException(E.ArsenalCode));
+    End;
+    On E:Exception do
+    Begin
+      ReturnValue:=-2;
+      DebugLog('Exception in service start = ' + E.Message);
+    end;
+  End;
+end;
+
+procedure TStopThread.Execute;
+begin
+  inherited;
+  DetachRamDisk(config);
+  ReturnValue:=1;
+end;
 
 procedure LoadSettings;
 var
@@ -109,7 +150,6 @@ begin
   finally
     Reg.Free;
   end;
-
 end;
 
 procedure TArsenalRamDisk.ServiceExecute(Sender: TService);
@@ -120,35 +160,54 @@ end;
 procedure TArsenalRamDisk.ServiceShutdown(Sender: TService);
 begin
   DebugLog('RamDisk service initiated shutdown');
-  DetachRamDisk(config);
+  if FStopThread = nil then FStopThread := TStopThread.Create(False);
+  While not FStopThread.Terminated Do
+  Begin
+    ReportStatus;
+    Sleep(1000);
+  end;
+  FStopThread.Free;
+  FStartThread.Free;
 end;
 
 procedure TArsenalRamDisk.ServiceStart(Sender: TService; var Started: Boolean);
 begin
-  DebugLog('RamDisk service was started');
+  DebugLog('RamDisk service is starting');
   LoadSettings;
   if (config.size<>0) then
-  try
-    if CreateRamDisk(config,False) Then Started:=True;
-  except
-    On E:ERamDiskError do DebugLog('Service could not create RAM-disk, error = ' + decodeException(E.ArsenalCode));
-    On E:Exception do DebugLog('Exception in service start = ' + E.Message);
-  End;
+  Begin
+    If FStartThread = Nil then FStartThread := TStartThread.Create(False)
+    Else FStartThread.Execute;
+    While not FStartThread.Terminated do
+    Begin
+      ReportStatus;
+      Sleep(1000);
+    end;
+    if FStartThread.ReturnValue > 0 Then
+    Begin
+      DebugLog('RamDisk service was started');
+      Started:=True;
+    end
+    Else Started:=False;
+  end
+  Else Started:=False;
 end;
 
 procedure TArsenalRamDisk.ServiceStop(Sender: TService; var Stopped: Boolean);
 begin
   DebugLog('RamDisk service is being stopped');
   if config.letter <> #0 then
-  begin
-    DebugLog('Trying to unmount RamDisk');
-    try
-      If DetachRamDisk(config) then Stopped:=True;
-    except
-      On E:ERamDiskError do DebugLog('Service could not destroy RAM-disk, error = ' + decodeException(E.ArsenalCode));
-      On E:Exception Do DebugLog('Exception in service stop = ' + E.Message);
+  Begin
+    If FStopThread = Nil then FStopThread := TStopThread.Create(False)
+    Else FStopThread.Execute;
+    While not FStopThread.Terminated do
+    Begin
+      ReportStatus;
+      Sleep(1000);
     end;
-  End
+    if FStartThread.ReturnValue > 0 Then DebugLog('RamDisk service was stopped');
+    Stopped:=True;
+  end
   Else Stopped:=True;
 end;
 

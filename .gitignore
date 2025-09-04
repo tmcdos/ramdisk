@@ -1,7 +1,101 @@
+# Modern Delphi 12.3 .gitignore
+#
+#-------------------------------------------------------------------------------
+# Delphi / C++Builder Compiled Output & Binaries
+#-------------------------------------------------------------------------------
 *.exe
 *.dll
+*.so
+*.a
+*.lib
+*.bpl
+*.dcp
 *.dcu
-*.bkm
+*.obj
+*.o
+
+# Compiled resource files
+*.res 
+
+#-------------------------------------------------------------------------------
+# IDE Generated, User-Specific & Intermediate Files
+#-------------------------------------------------------------------------------
+*.~*
+*.bak
+*.old
+
+# Delphi 7 and Delphi 6 Diagram Portfolio
+*.ddp
+
+# Delphi 7 (and older) Project Configuration filed automatically created by command line compiler
+*.cfg
+
+# General temporary files
+*.tmp 
+
+# General temporary files
+*.temp 
+
+*.local
+*.dsk
+*.cfg
+*.map
+*.tds
 *.drc
-*.zip
-dcu
+*.rsm
+*.log
+*.pch
+*.ipch
+*.stat
+*.identcache
+*.dproj.local
+*.dproj.user
+*.groupproj.local
+*.groupproj.user
+
+# Delphi IDE bookmarks
+*.bkm 
+
+# TestInsight configuration files
+*.tvsconfig 
+
+# Files with .history extension
+*.history 
+
+# Legacy project files
+*.dof
+*.kof
+
+#-------------------------------------------------------------------------------
+# IDE History, Recovery & Autosave
+#-------------------------------------------------------------------------------
+**/__history/
+**/__recovery/
+*.autosave
+
+#-------------------------------------------------------------------------------
+# Output Directories (using **/ to match at any depth)
+#-------------------------------------------------------------------------------
+**/Win32/
+**/Win64/
+**/Debug/
+**/Release/
+
+# Cross-platform output folders
+**/Linux64/
+**/OSX64/
+**/OSXARM64/
+**/Android/
+**/Android64/
+**/iOSDevice32/
+**/iOSDevice64/
+**/iOSSimulator/
+
+#-------------------------------------------------------------------------------
+# Common Temporary / Local / Sensitive Files (General)
+#-------------------------------------------------------------------------------
+# General compressed archives (often backups or downloads)
+*.zip 
+
+# Environment variable files (CRITICAL for sensitive data)
+*.env 

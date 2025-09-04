@@ -2,7 +2,7 @@ object ArsenalRamDisk: TArsenalRamDisk
   OldCreateOrder = False
   AllowPause = False
   DisplayName = 'Arsenal RAM-disk'
-  WaitHint = 8000
+  WaitHint = 10000
   AfterInstall = ServiceAfterInstall
   OnExecute = ServiceExecute
   OnShutdown = ServiceShutdown

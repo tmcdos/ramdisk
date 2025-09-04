@@ -250,12 +250,13 @@ const
   Function ImDiskOpenDeviceByName(FileName:PUnicodeString; AccessMode:DWORD):THandle;
   Function ImScsiOpenScsiAdapter(var PortNumber:Byte):THandle;
   Function ImScsiDeviceIoControl(device:THandle; ControlCode: DWORD; var SrbIoControl: TSrbIoControl; Size, Timeout: DWORD; var ReturnLength: DWORD):Boolean;
+  Function WidePosEx(const SubStr, S: widestring; Offset: Integer = 1): Integer;
   Function decodeException(code:TRamErrors):String;
   Procedure DebugLog(msg:string;eventType:DWord = EVENTLOG_INFORMATION_TYPE);
 
 implementation
 
-Uses Math,Classes;
+Uses Math,Classes, TntWideStrUtils;
 
 Var
   EventLogHandle:Integer;
@@ -460,6 +461,43 @@ begin
     Inc(ptr);
   end;
   Result:=['C'..'Z'] - used; // exclude floppy drives
+end;
+
+procedure WStrDelete(var S: WideString; Index, Count: Integer);
+var
+  L, N: Integer;
+  NewStr: PWideChar;
+begin
+  L := Length(S);
+  if (L > 0) and (Index >= 1) and (Index <= L) and (Count > 0) then
+  begin
+    Dec(Index);
+    N := L - Index - Count;
+    if N < 0 then N := 0;
+    if (Index = 0) and (N = 0) then NewStr := nil else
+    begin
+      NewStr := WStrAlloc(Index + N);
+      if Index > 0 then
+        Move(Pointer(S)^, NewStr^, Index * 2);
+      if N > 0 then
+        Move(PWideChar(Pointer(S))[L - N], NewStr[Index], N * 2);
+    end;
+    S := WStrPas(NewStr);
+    WStrDispose(NewStr);
+  end;
+end;
+
+function WidePosEx(const SubStr, S: widestring; Offset: Integer = 1): Integer;
+var
+  i: integer;
+  tmp: widestring;
+begin
+  Result := 0;
+  tmp := S;
+  WStrDelete(tmp,1,Offset);
+  i := Pos(SubStr, tmp);
+  if (i > 0) then
+    Result := Offset + i;
 end;
 
 Function decodeException(code:TRamErrors):String;
