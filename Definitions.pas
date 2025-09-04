@@ -370,7 +370,7 @@ Function ImScsiOpenScsiAdapter(var PortNumber:Byte):THandle;
 Var
   dosDevs, target: String;
   devName: TUnicodeString;
-  i, len: Integer;
+  i, len, multiple: Integer;
   portNum: LongWord;
   devices: TStringList;
   handle: THandle;
@@ -380,19 +380,24 @@ const
   scsiport_prefix = '\Device\Scsi\phdskmnt';
   storport_prefix = '\Device\RaidPort';
 Begin
-  SetLength(dosDevs, MAX_DOS_NAMES);
-  SetLength(target, 200);
-  len:=QueryDosDevice(NIL, PAnsiChar(dosDevs), Length(dosDevs));
-  if len = 0 then
-  begin
-    tmp:=GetLastError;
-    raise Exception.Create('ImScsiOpenScsiAdapter:QueryDosDevice = ' + SysErrorMessage(tmp));
-  end;
+  multiple:=1;
+  Repeat
+    SetLength(dosDevs, MAX_DOS_NAMES * multiple);
+    len:=QueryDosDevice(NIL, PAnsiChar(dosDevs), Length(dosDevs));
+    if len=0 then Inc(multiple);
+    if multiple > 10 then
+    begin
+      DebugLog(Format('ImScsiOpenScsiAdapter::QueryDosDevice can not fit DOS device names inside %d bytes',[Length(dosdevs)]),EVENTLOG_ERROR_TYPE);
+      tmp:=GetLastError;
+      raise Exception.Create('ImScsiOpenScsiAdapter::QueryDosDevice = ' + SysErrorMessage(tmp));
+    end;
+  Until len <> 0;
   for i:=1 to len Do
     if dosDevs[i] = #0 then dosDevs[i]:= #13;
   devices:=Nil;
   Result:=INVALID_HANDLE_VALUE;
   Try
+    SetLength(target, 2000);
     devices:=TStringList.Create;
     devices.Text:=dosDevs;
     for i:=0 to devices.Count-1 do
@@ -404,11 +409,12 @@ Begin
         Begin
           if QueryDosDevice(PAnsiChar(devices[i]), PAnsiChar(target), Length(target)) = 0 then
           try
+            DebugLog(Format('ImScsiOpenScsiAdapter::QueryDosDevice can not fit DOS device name for "%s" inside %d bytes',[devices[i],Length(target)]),EVENTLOG_ERROR_TYPE);
             RaiseLastOSError;
           except
             on E:Exception do
             Begin
-              E.Message:= 'ImScsiOpenScsiAdapter:QueryDosDevice[' + IntToStr(i) + '] = ' + E.Message;
+              E.Message:= 'ImScsiOpenScsiAdapter::QueryDosDevice[' + IntToStr(i) + '] = ' + E.Message;
               raise E;
             end;
           end;

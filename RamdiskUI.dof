@@ -115,7 +115,7 @@ AutoIncBuild=0
 MajorVer=1
 MinorVer=1
 Release=1
-Build=11
+Build=12
 Debug=0
 PreRelease=0
 Special=0
@@ -126,7 +126,7 @@ CodePage=1251
 [Version Info Keys]
 CompanyName=
 FileDescription=
-FileVersion=1.1.1.11
+FileVersion=1.1.1.12
 InternalName=
 LegalCopyright=
 LegalTrademarks=
