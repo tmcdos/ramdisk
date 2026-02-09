@@ -174,23 +174,12 @@ procedure TArsenalRamDisk.ServiceStart(Sender: TService; var Started: Boolean);
 begin
   DebugLog('RamDisk service is starting');
   LoadSettings;
+  Started:=True;
   if (config.size<>0) then
   Begin
-    If FStartThread = Nil then FStartThread := TStartThread.Create(False)
-    Else FStartThread.Execute;
-    While not FStartThread.Terminated do
-    Begin
-      ReportStatus;
-      Sleep(1000);
-    end;
-    if FStartThread.ReturnValue > 0 Then
-    Begin
-      DebugLog('RamDisk service was started');
-      Started:=True;
-    end
-    Else Started:=False;
-  end
-  Else Started:=False;
+    If FStartThread = Nil then FStartThread := TStartThread.Create(False) Else FStartThread.Execute;
+    DebugLog('RamDisk service was started');
+  end;
 end;
 
 procedure TArsenalRamDisk.ServiceStop(Sender: TService; var Stopped: Boolean);

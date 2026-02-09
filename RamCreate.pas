@@ -357,6 +357,7 @@ Begin
           // https://webcache.googleusercontent.com/search?q=cache:SY0k8D6vIxIJ:https://msmania.wordpress.com/tag/ivdsdisk/+&cd=21&hl=bg&ct=clnk&gl=bg
           // we use the undocumented FMIFS.DLL instead of Format.COM or VDS or WMI or ShFormatDrive - it always takes at least 5 seconds
           formatDriveName:=volumeName;
+          DebugLog('Begin formatting NTFS filesystem');
           FormatEx(PWideChar(formatDriveName),FMIFS_HARDDISK,'NTFS','RAMDISK',True,4096,@FormatCallBack);
           DebugLog('Successfully created NTFS filesystem on the RAM-disk');
           if ShowProgress then HideInfo;

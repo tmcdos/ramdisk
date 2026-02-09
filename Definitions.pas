@@ -517,6 +517,7 @@ End;
 Procedure DebugLog(msg:string;eventType:DWord = EVENTLOG_INFORMATION_TYPE);
 Begin
   ReportEvent(EventLogHandle,eventType,0,0,Nil,1,0,PChar(msg),Nil);
+  OutputDebugString(PChar(msg));
 end;
 
 Initialization
